@@ -4,7 +4,14 @@ require(`dotenv`).config({
 
 module.exports = {
   siteMetadata: {
+    author: `Sid Mansukhani`,
+    siteDescription: ``,
+    siteHeadline: ``,
+    siteImage: ``,
+    siteLanguage: `en`,
+    siteTitle: `Sid Mansukhani`,
     siteTitleAlt: `Sid Mansukhani's Blog`,
+    siteUrl: `https://sidmansukhani.dev`
   },
   plugins: [
     {
@@ -12,22 +19,22 @@ module.exports = {
       options: {
         navigation: [
           {
-            title: `Blog`,
-            slug: `/blog`,
+            title: `About`,
+            slug: `/about`
           },
           {
-            title: `About`,
-            slug: `/about`,
-          },
+            title: `Blog`,
+            slug: `/blog`
+          }
         ],
         externalLinks: [
           {
             name: `Twitter`,
-            url: `https://twitter.com/lekoarts_de`,
+            url: `https://twitter.com/sidm1983`,
           },
           {
             name: `Instagram`,
-            url: `https://www.instagram.com/lekoarts.de/`,
+            url: `https://www.instagram.com/sidm1983/`,
           },
         ],
       },
@@ -44,7 +51,7 @@ module.exports = {
       options: {
         name: `minimal-blog - @lekoarts/gatsby-theme-minimal-blog`,
         short_name: `minimal-blog`,
-        description: `Typography driven, feature-rich blogging theme with minimal aesthetics. Includes tags/categories support and extensive features for code blocks such as live preview, line numbers, and code highlighting.`,
+        description: `A blog by Sid Mansukhani, a Melbourne-based developer, tech enthusiast, aspiring photographer, father & husband.`,
         start_url: `/`,
         background_color: `#fff`,
         theme_color: `#6B46C1`,
