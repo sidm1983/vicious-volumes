@@ -4,9 +4,9 @@ require(`dotenv`).config({
 
 module.exports = {
   siteMetadata: {
-    author: `Sid Mansukhani`,
-    siteDescription: ``,
-    siteHeadline: ``,
+    author: `@sidm1983`,
+    siteDescription: `A blog by Sid Mansukhani, a Melbourne-based developer, tech enthusiast, aspiring photographer, father & husband.`,
+    siteHeadline: `A blog by Sid Mansukhani, a Melbourne-based developer, tech enthusiast, aspiring photographer, father & husband.`,
     siteImage: ``,
     siteLanguage: `en`,
     siteTitle: `Sid Mansukhani`,
