@@ -90,8 +90,23 @@ We can also print more than one field, so if we wanted to also print the http st
 ```shell noLineNumbers {1}
 > awk '{print $4,$14}' u_ex171118-sample.txt
 ```
+```noLineNumbers
+Information
 
-This is great! We've been able to retrieve only the fields in the file that is useful to us. However, the script is not very useful as it outputs all the URLs in the file. Our test file is only a sample, but imagine if it had thousands of lines. It wouldn't be very useful to just print out every URL. It would make sense to filter out unwanted lines and only retrieve lines that interest us. So how would we do that.
+
+cs-method cs-host
+/de 301
+/de/ 200
+/global/lwb.min.js 200
+/global/img/body_bg.png 304
+/global/img/content_bg_top.png 304
+/global/img/menu_spacer.png 304
+/global/img/logo.jpg 304
+/global/img/css_valid.png 304
+...
+```
+
+This is great! We've been able to retrieve only the fields in the file that is useful to us. However, the script is not very useful as it outputs all the URLs in the file. Our test file is only a sample, but imagine if it had thousands of lines. It wouldn't be very useful to just print out every URL. It would make sense to filter out unwanted lines and only retrieve lines that interest us. So, how would we do that?
 
 Remember how I explained that an AWK script is basically a series of condition action statement pairs? Well, all the commands we've written so far have only had actions without conditions. This means that the actions were executed for every line. In order for us to only print the URLs of certain lines while skipping the ones we don't want, we have to add a condition to our script text. Conditions are written at the beginning of the script text just before the opening curly brace ({) character. So let's modify the above script to only return URLs and status codes for URLs that begin with '/global/img'.
 
