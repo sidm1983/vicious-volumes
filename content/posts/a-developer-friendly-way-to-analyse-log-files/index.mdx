@@ -5,11 +5,161 @@ date: 2020-02-23
 
 Let's say you've been asked to analyse web server log files, like IIS logs for example. How would you go about doing this? There are many ways of course. You could import the log file into a database and run queries against it. You could also download software like Microsoft's Log Parser and run SQL-like queries to make sense of your logs. What about using Microsoft Excel? Sure, that works too.
 
-Today, we are not going to use any of the above methods. Instead, we are going to attempt to extract meaningful data from IIS log files using a developer-friendly approach. (Psst...this approach should work for extracting data out of any type of text file, and not just IIS log files.)
+Today, we are not going to use any of the above methods. Instead, we are going to attempt to extract meaningful data from an IIS log file using a developer-friendly approach. (Psst...this approach should work for extracting data out of any type of text file, and not just IIS log files.)
 
 Now, the approach in question uses a Linux command to help with extracting data, so developers who work in the Linux world are probably very familiar with what I am about to demonstrate. However, if you've been living in the world of Windows or you are new to Linux, then keep reading.
+
+Before we go any further, download <a href="./samples/log-files/iis/u_ex171118-sample.txt" target="_blank">this sample IIS log file</a>. We will be using this file as our test log file. Here is a snippet of its contents:
+
+```
+#Software: Microsoft Internet Information Services 10.0
+#Version: 1.0
+#Date: 2017-11-18 00:01:07
+#Fields: date time cs-method cs-uri-stem cs-uri-query s-port cs-username c-ip cs-version cs(User-Agent) cs(Cookie) cs(Referer) cs-host sc-status sc-substatus sc-win32-status sc-bytes cs-bytes time-taken
+2017-11-18 08:48:20 GET /de adpar=12345&gclid=1234567890 443 - 149.172.138.41 HTTP/2.0 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64)+AppleWebKit/537.36+(KHTML,+like+Gecko)+Chrome/62.0.3202.89+Safari/537.36+OPR/49.0.2725.39 - https://www.google.de/ www.site-logfile-explorer.com 301 0 0 624 543 46
+2017-11-18 08:48:20 GET /de/ adpar=12345&gclid=1234567890 443 - 149.172.138.41 HTTP/2.0 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64)+AppleWebKit/537.36+(KHTML,+like+Gecko)+Chrome/62.0.3202.89+Safari/537.36+OPR/49.0.2725.39 - https://www.google.de/ www.site-logfile-explorer.com 200 0 0 12973 544 62
+2017-11-18 11:45:11 GET /global/lwb.min.js - 443 - 87.185.206.252 HTTP/2.0 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64;+rv:57.0)+Gecko/20100101+Firefox/57.0 _ga=GA1.2.573603466.1510956966;+_gid=GA1.2.622072548.1510956966 https://translate.google.com/ www.site-logfile-explorer.com 200 0 0 2429 473 15
+2017-11-18 11:45:11 GET /global/img/body_bg.png - 443 - 87.185.206.252 HTTP/2.0 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64;+rv:57.0)+Gecko/20100101+Firefox/57.0 _ga=GA1.2.573603466.1510956966;+_gid=GA1.2.622072548.1510956966 https://translate.google.com/ www.site-logfile-explorer.com 304 0 0 232 477 33
+2017-11-18 11:45:11 GET /global/img/content_bg_top.png - 443 - 87.185.206.252 HTTP/2.0 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64;+rv:57.0)+Gecko/20100101+Firefox/57.0 _ga=GA1.2.573603466.1510956966;+_gid=GA1.2.622072548.1510956966 https://translate.google.com/ www.site-logfile-explorer.com 304 0 0 232 484 33
+2017-11-18 11:45:11 GET /global/img/menu_spacer.png - 443 - 87.185.206.252 HTTP/2.0 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64;+rv:57.0)+Gecko/20100101+Firefox/57.0 _ga=GA1.2.573603466.1510956966;+_gid=GA1.2.622072548.1510956966 https://translate.google.com/ www.site-logfile-explorer.com 304 0 0 232 481 35
+```
 
 ### To WSL or not to WSL...
 
 That is definitely a question, and the answer depends on whether you are reading this post on Linux or Windows. Linux users can skip this section and move on to the next. If you are on Windows (hopefully a 64-bit installation of Windows 10 version 1607 or higher 🤞🏻), you will need to install the **Windows Subsystem for Linux (WSL)**. Follow <a href="https://docs.microsoft.com/en-us/windows/wsl/install-win10" target="_blank">these instructions</a> to enable WSL and install your preferred Linux distribution on Windows. If you are unsure which one to choose, just install Ubuntu 18.04 LTS from the Microsoft Store. That's the one I am using. So go ahead, install that and come back when you're ready. Don't worry, I'll wait for you...I promise!
 
+### Meet `'awk'`
+
+Now that you have WSL and Ubuntu (or any other Linux distribution) installed and set up, it is time to meet the star of the show, ***awk***.
+
+The Unix/Linux command ***awk*** lets you run scripts written in the AWK programming language to process lines in one or more files. The AWK script consists of a series of condition action statement pairs. Each line in the file is tested against the condition (which can be either a regex pattern or an regular conditional statement) and if the condition evaluates to true, the corresponding action block is executed. In other words, ***awk*** lets you process text files line-by-line allowing you to extract only the data you need from it or produce formatted reports. Now, before we get into the detail of how this command works, let me give you a brief history lesson.
+
+### A w`awk` down memory lane
+
+AWK the programming language was first designed and created in 1977 at Bell Labs by Alfred Aho, Peter Weinberger and Brian Kernighan. The name of the language is derived from their surnames (AWK = **A**ho **W**einberger **K**ernighan). In the mid to late 1980s, AWK was expanded significantly and that resulted in the GNU AWK implementation (or **gawk** for short) which was released in 1988. This implementation of AWK is the most widely deployed version and is what you can find bundled into Ubuntu.
+
+### B`awk` to the future
+
+Now that we've safely parked the DeLorean in the garage, let's jump straight into writing some simple commands. Here is the basic syntax for invoking awk:
+
+```shell noLineNumbers
+> awk [options] 'program-text' file
+```
+
+The simplest command we can write is to retrieve and display all the lines in our sample file which looks like this:
+
+```shell noLineNumbers {1}
+> awk '{print $0}' u_ex171118-sample.txt
+```
+```noLineNumbers
+#Software: Microsoft Internet Information Services 10.0
+#Version: 1.0
+#Date: 2017-11-18 00:01:07
+#Fields: date time cs-method cs-uri-stem cs-uri-query s-port cs-username c-ip cs-version cs(User-Agent) cs(Cookie) cs(Referer) cs-host sc-status sc-substatus sc-win32-status sc-bytes cs-bytes time-taken  2017-11-18 08:48:20 GET /de adpar=12345&gclid=1234567890 443 - 149.172.138.41 HTTP/2.0 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64)+AppleWebKit/537.36+(KHTML,+like+Gecko)+Chrome/62.0.3202.89+Safari/537.36+OPR/49.0.2725.39 - https://www.google.de/ www.site-logfile-explorer.com 301 0 0 624 543 46
+2017-11-18 08:48:20 GET /de/ adpar=12345&gclid=1234567890 443 - 149.172.138.41 HTTP/2.0 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64)+AppleWebKit/537.36+(KHTML,+like+Gecko)+Chrome/62.0.3202.89+Safari/537.36+OPR/49.0.2725.39 - https://www.google.de/ www.site-logfile-explorer.com 200 0 0 12973 544 62
+2017-11-18 11:45:11 GET /global/lwb.min.js - 443 - 87.185.206.252 HTTP/2.0 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64;+rv:57.0)+Gecko/20100101+Firefox/57.0 _ga=GA1.2.573603466.1510956966;+_gid=GA1.2.622072548.1510956966 https://translate.google.com/ www.site-logfile-explorer.com 200 0 0 2429 473 15
+2017-11-18 11:45:11 GET /global/img/body_bg.png - 443 - 87.185.206.252 HTTP/2.0 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64;+rv:57.0)+Gecko/20100101+Firefox/57.0 _ga=GA1.2.573603466.1510956966;+_gid=GA1.2.622072548.1510956966 https://translate.google.com/ www.site-logfile-explorer.com 304 0 0 232 477 33     2017-11-18 11:45:11 GET /global/img/content_bg_top.png - 443 - 87.185.206.252 HTTP/2.0 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64;+rv:57.0)+Gecko/20100101+Firefox/57.0 _ga=GA1.2.573603466.1510956966;+_gid=GA1.2.622072548.1510956966 https://translate.google.com/ www.site-logfile-explorer.com 304 0 0 232 484 33
+...
+```
+
+The above command fetches each line from the sample file and feeds it into the program text `{print $0}` which prints the contents of the $0 variable to standard out. $0 in this case is a predefined numbered variable that awk sets up automatically for you and it always contains the line that is currently being processed. That's handy! However, that's not the only automatic variable that awk sets up. Apart from giving you the whole line in $0, awk also splits up the line into fields and makes those available as numbered fields too. It puts the first field into $1, the second into $2, the third in $3 and so on. So, if you only wanted to print out the URL field (the fourth field) of each line, then your command would look like this:
+
+```shell noLineNumbers {1}
+> awk '{print $4}' u_ex171118-sample.txt
+```
+```noLineNumbers
+Information
+
+
+cs-method
+/de
+/de/
+/global/lwb.min.js
+/global/img/body_bg.png
+/global/img/content_bg_top.png
+/global/img/menu_spacer.png
+/global/img/logo.jpg
+/global/img/css_valid.png
+...
+```
+
+Notice how there are some blank lines printed. This is happening because our sample file has some metadata at the top. Some of these metadata lines don't have a fourth field (i.e. the $4 variable is empty), so they show up as blank lines. Later, I will show you how to skip the top 4 lines of the file and stop them from being processed. Let's move on for now.
+
+We can also print more than one field, so if we wanted to also print the http status code along with the URL, we could do so like this:
+
+```shell noLineNumbers {1}
+> awk '{print $4,$14}' u_ex171118-sample.txt
+```
+
+This is great! We've been able to retrieve only the fields in the file that is useful to us. However, the script is not very useful as it outputs all the URLs in the file. Our test file is only a sample, but imagine if it had thousands of lines. It wouldn't be very useful to just print out every URL. It would make sense to filter out unwanted lines and only retrieve lines that interest us. So how would we do that.
+
+Remember how I explained that an AWK script is basically a series of condition action statement pairs? Well, all the commands we've written so far have only had actions without conditions. This means that the actions were executed for every line. In order for us to only print the URLs of certain lines while skipping the ones we don't want, we have to add a condition to our script text. Conditions are written at the beginning of the script text just before the opening curly brace ({) character. So let's modify the above script to only return URLs and status codes for URLs that begin with '/global/img'.
+
+```shell noLineNumbers {1}
+> awk '/\/global\/img/ {print $4,$14}' u_ex171118-sample.txt
+```
+```noLineNumbers
+/global/img/body_bg.png 304
+/global/img/content_bg_top.png 304
+/global/img/menu_spacer.png 304
+/global/img/logo.jpg 304
+/global/img/css_valid.png 304
+...
+```
+
+We just added the regular expression `/\/global\/img/` to our script. Regex patterns must start and end with a forward slash `/` character. Since the forward slash character has a special meaning in this case (i.e. to denote the start and end of a regex pattern) we have to escape it when we want to have it match a forward slash character in the URL, hence the `\/` parts of the regex. This regex pattern is telling awk to execute the `print $4,$14` action for all lines that have `/global/img` in them. Notice how we are not telling awk which "field" to test using the regex pattern. In this case, awk will default to testing the regex pattern against the whole line, which is stored in the $0 variable. This condition can be rewritten as `$0 ~ /\/global\/img/` and it would still mean the same thing. To prove that ommitting the field variable causes awk to default to the $0 variable, let's modify the script above slightly.
+
+```shell noLineNumbers {1}
+> awk '/^\/global\/img/ {print $4,$14}' u_ex171118-sample.txt
+# Notice that we have added the caret character (^) to the beginning of the regex pattern.
+# This tells awk to look for lines that start with '/global/img'.
+
+# This command retruns no output as there are no lines that start with '/global/img'.
+# All the lines start with '2017'.
+# This means that awk is evaluating the regex against the whole line.
+```
+
+Okay, but what if we wanted to have our regex tested against a certain field and not the whole line. We may want to do this because there may be another part of the line that has the same pattern we are trying to match. We wouldn't want awk to accidentally return lines we didn't want. Well, you can actually tell awk which field to use when testing for the regex pattern. I actually hinted at how we could do this when I mentioned earlier that having a regex pattern without a specified field can also be rewritten as `$0 ~ /\/global\/img/`. We can just use this same format for a regex condition and change the $0 variable to the numbered field variable we want to test against.
+
+```shell noLineNumbers {1}
+> awk '$4 ~ /^\/global\/img/ {print $4,$14}' u_ex171118-sample.txt
+# We have added '$4 ~' just before the regex.
+```
+```noLineNumbers
+/global/img/body_bg.png 304
+/global/img/content_bg_top.png 304
+/global/img/menu_spacer.png 304
+/global/img/logo.jpg 304
+/global/img/css_valid.png 304
+...
+```
+
+The script now reads like this: *if the contents of the fourth field (**$4**) of a line matches (**~**) the regex pattern (**^\/global\/img**) then execute the action (**print $4,$14**)*.
+
+Earlier, I mentioned that the condition part of the script could be a regex pattern or a regular conditional statement. Let's see how we can use a standard conditional instead. Let's say we didn't want to match on a pattern and instead we wanted to do an exact match on the status field. Here is the command to retrieve all the URLs that have a status code of 404:
+
+```shell noLineNumbers {1}
+> awk '$14 == 404 {print $4,$14}' u_ex171118-sample.txt
+```
+```noLineNumbers
+/contact/contact.aspxx 404
+/wp-includes/wlwmanifest.xml 404
+/xmlrpc.php 404
+/blog/wp-includes/wlwmanifest.xml 404
+/wordpress/wp-includes/wlwmanifest.xml 404
+/wp/wp-includes/wlwmanifest.xml 404
+/site/wp-includes/wlwmanifest.xml 404
+/cms/wp-includes/wlwmanifest.xml 404
+```
+
+This command is similar to the previous one, except that we have changed the condition to a more standard boolean expression.
+
+### Additional resources
+
+1. The GNU Awk User's Guide - https://www.gnu.org/software/gawk/manual/gawk.html
+
+### References
+
+1. This blog post was inspired by the <a href="https://www.youtube.com/watch?v=jJ02kEETw70" target="_blank">"EVERYONE Needs to Learn a Little Bit of AWK!"</a> video on the <a href="https://www.youtube.com/channel/UCRjSO-juFtngAeJGJRMdIZw" target="_blank">Gary Explains</a> Youtube channel.
+1. Sample IIS file copied from https://www.site-logfile-explorer.com/logfile-samples/iis.aspx
+1. AWK on Wikipedia - https://en.wikipedia.org/wiki/AWK
