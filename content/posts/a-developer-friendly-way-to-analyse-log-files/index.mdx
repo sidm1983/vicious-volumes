@@ -9,7 +9,7 @@ Today, we are not going to use any of the above methods. Instead, we are going t
 
 Now, the approach in question uses a Linux command to help with extracting data, so developers who work in the Linux world are probably very familiar with what I am about to demonstrate. However, if you've been living in the world of Windows or you are new to Linux, then keep reading.
 
-Before we go any further, download <a href="./samples/log-files/iis/u_ex171118-sample.txt" target="_blank">this sample IIS log file</a>. We will be using this file as our test log file. Here is a snippet of its contents:
+Before we go any further, if you would like to follow along with the commands in this post, download <a href="./samples/log-files/iis/u_ex171118-sample.txt" target="_blank">this sample IIS log file</a>. We will be using this file as our test log file. Here is a snippet of its contents:
 
 ```
 #Software: Microsoft Internet Information Services 10.0
@@ -40,16 +40,20 @@ AWK the programming language was first designed and created in 1977 at Bell Labs
 
 ### B`awk` to the future
 
-Now that we've safely parked the DeLorean in the garage, let's jump straight into writing some simple commands. Here is the basic syntax for invoking awk:
+Now that we've safely parked the DeLorean in the garage, let's open up a Ubuntu terminal window so you can execute the commands shown below and follow along. You should be able to find the 'Ubuntu' application in your start menu on Windows or via the Windows search bar. Once open, make sure you change your working directory to the directory where you saved the above sample log file.
+
+Alright, so here is the basic syntax for invoking **awk**:
 
 ```shell noLineNumbers
-> awk [options] 'program-text' file
+awk [options] 'program-text' file
 ```
 
-The simplest command we can write is to retrieve and display all the lines in our sample file which looks like this:
+You can type `man awk` into your Ubuntu terminal to see the official documentation for the awk/gawk command including all the option flags you can pass in to the command.
+
+Okay, so let's jump straight into writing some simple commands. The simplest command we can write is to retrieve and display all the lines in our sample file which looks like this:
 
 ```shell noLineNumbers {1}
-> awk '{print $0}' u_ex171118-sample.txt
+awk '{print $0}' u_ex171118-sample.txt
 ```
 ```noLineNumbers
 #Software: Microsoft Internet Information Services 10.0
@@ -65,7 +69,7 @@ The simplest command we can write is to retrieve and display all the lines in ou
 The above command fetches each line from the sample file and feeds it into the program text `{print $0}` which prints the contents of the $0 variable to standard out. $0 in this case is a predefined numbered variable that awk sets up automatically for you and it always contains the line that is currently being processed. That's handy! However, that's not the only automatic variable that awk sets up. Apart from giving you the whole line in $0, awk also splits up the line into fields and makes those available as numbered fields too. It puts the first field into $1, the second into $2, the third in $3 and so on. So, if you only wanted to print out the URL field (the fourth field) of each line, then your command would look like this:
 
 ```shell noLineNumbers {1}
-> awk '{print $4}' u_ex171118-sample.txt
+awk '{print $4}' u_ex171118-sample.txt
 ```
 ```noLineNumbers
 Information
@@ -88,7 +92,7 @@ Notice how there are some blank lines printed. This is happening because our sam
 We can also print more than one field, so if we wanted to also print the http status code along with the URL, we could do so like this:
 
 ```shell noLineNumbers {1}
-> awk '{print $4,$14}' u_ex171118-sample.txt
+awk '{print $4,$14}' u_ex171118-sample.txt
 ```
 ```noLineNumbers
 Information
@@ -106,12 +110,12 @@ cs-method cs-host
 ...
 ```
 
-This is great! We've been able to retrieve only the fields in the file that is useful to us. However, the script is not very useful as it outputs all the URLs in the file. Our test file is only a sample, but imagine if it had thousands of lines. It wouldn't be very useful to just print out every URL. It would make sense to filter out unwanted lines and only retrieve lines that interest us. So, how would we do that?
+This is great! We've been able to retrieve only the fields in the file that are useful to us. However, this script is not very useful as it outputs all the URLs in the file. Our test file is only a sample, but imagine if it had thousands of lines (as log files usually do). It wouldn't be very useful to just print out every URL. It would make sense to filter out unwanted lines and only retrieve lines that interest us. So, how would we do that?
 
 Remember how I explained that an AWK script is basically a series of condition action statement pairs? Well, all the commands we've written so far have only had actions without conditions. This means that the actions were executed for every line. In order for us to only print the URLs of certain lines while skipping the ones we don't want, we have to add a condition to our script text. Conditions are written at the beginning of the script text just before the opening curly brace ({) character. So let's modify the above script to only return URLs and status codes for URLs that begin with '/global/img'.
 
 ```shell noLineNumbers {1}
-> awk '/\/global\/img/ {print $4,$14}' u_ex171118-sample.txt
+awk '/\/global\/img/ {print $4,$14}' u_ex171118-sample.txt
 ```
 ```noLineNumbers
 /global/img/body_bg.png 304
@@ -125,7 +129,7 @@ Remember how I explained that an AWK script is basically a series of condition a
 We just added the regular expression `/\/global\/img/` to our script. Regex patterns must start and end with a forward slash `/` character. Since the forward slash character has a special meaning in this case (i.e. to denote the start and end of a regex pattern) we have to escape it when we want to have it match a forward slash character in the URL, hence the `\/` parts of the regex. This regex pattern is telling awk to execute the `print $4,$14` action for all lines that have `/global/img` in them. Notice how we are not telling awk which "field" to test using the regex pattern. In this case, awk will default to testing the regex pattern against the whole line, which is stored in the $0 variable. This condition can be rewritten as `$0 ~ /\/global\/img/` and it would still mean the same thing. To prove that ommitting the field variable causes awk to default to the $0 variable, let's modify the script above slightly.
 
 ```shell noLineNumbers {1}
-> awk '/^\/global\/img/ {print $4,$14}' u_ex171118-sample.txt
+awk '/^\/global\/img/ {print $4,$14}' u_ex171118-sample.txt
 # Notice that we have added the caret character (^) to the beginning of the regex pattern.
 # This tells awk to look for lines that start with '/global/img'.
 
@@ -137,7 +141,7 @@ We just added the regular expression `/\/global\/img/` to our script. Regex patt
 Okay, but what if we wanted to have our regex tested against a certain field and not the whole line. We may want to do this because there may be another part of the line that has the same pattern we are trying to match. We wouldn't want awk to accidentally return lines we didn't want. Well, you can actually tell awk which field to use when testing for the regex pattern. I actually hinted at how we could do this when I mentioned earlier that having a regex pattern without a specified field can also be rewritten as `$0 ~ /\/global\/img/`. We can just use this same format for a regex condition and change the $0 variable to the numbered field variable we want to test against.
 
 ```shell noLineNumbers {1}
-> awk '$4 ~ /^\/global\/img/ {print $4,$14}' u_ex171118-sample.txt
+awk '$4 ~ /^\/global\/img/ {print $4,$14}' u_ex171118-sample.txt
 # We have added '$4 ~' just before the regex.
 ```
 ```noLineNumbers
@@ -154,7 +158,7 @@ The script now reads like this: *if the contents of the fourth field (**$4**) of
 Earlier, I mentioned that the condition part of the script could be a regex pattern or a regular conditional statement. Let's see how we can use a standard conditional instead. Let's say we didn't want to match on a pattern and instead we wanted to do an exact match on the status field. Here is the command to retrieve all the URLs that have a status code of 404:
 
 ```shell noLineNumbers {1}
-> awk '$14 == 404 {print $4,$14}' u_ex171118-sample.txt
+awk '$14 == 404 {print $4,$14}' u_ex171118-sample.txt
 ```
 ```noLineNumbers
 /contact/contact.aspxx 404
@@ -168,6 +172,140 @@ Earlier, I mentioned that the condition part of the script could be a regex patt
 ```
 
 This command is similar to the previous one, except that we have changed the condition to a more standard boolean expression.
+
+So far, we have only really retrieved lines and fields based on a condition. What if we wanted to do some calculations and reporting on the data. One of the reports you may want to retrieve from a log file is a breakdown of the http status codes. How many successful requests do we have. Are people experiencing any 404 or 500 errors? Let's write a script that will give us this breakdown.
+
+Before we get into it, I have to introduce you to a couple of AWK concepts. BEGIN/END blocks and Arrays.
+
+**BEGIN and END blocks**
+
+BEGIN and END blocks within an AWK script. Basically, you can write a BEGIN and/or an END action in your scripts. The BEGIN action will execute once before any lines are processed and the END action will be executed once at the end after all the lines have been processed. This is especially handy if you have to do some set up like assigning variables before you start processing the file and also if you need to do some clean up or output of information at the end. You can also use either a BEGIN block or an END block or both. Here is what the basic syntax for BEGIN and END blocks look like:
+
+```shell noLineNumbers
+awk 'BEGIN { [begin-actions] } { [actions-for-each-line] } END { [end-actions] }' file
+```
+
+**Arrays in AWK**
+
+Also, we will be using an array to store the total number of requests per status code. Arrays in AWK don't need to be declared or initialised. They are also not like arrays in many other languages. They are not fixed length and are associative, meaning that they are stored as key-value pairs. You can use any number or string as an array index/key and you can mix string and number values into the same array. A new element can also be added to the array at any time. Think of AWK arrays more like dictionaries rather than the fixed-length, single-typed arrays in languages like C# or Java.
+
+Now that we have discussed the above concepts, here is what our breakdown script looks like.
+
+```shell noLineNumbers {1}
+awk '{ breakdown[$14]++ } END { for(code in breakdown) { print code, breakdown[code] } }' u_ex171118-sample.txt
+```
+
+When you run the above command, you get the following output:
+
+```noLineNumbers
+ 3
+301 3
+cs-host 1
+304 93
+200 38
+404 8
+```
+
+Okay so that output kinda looks like what we want, except that there are a couple of extra lines that we were not expecting. This happened because the first 4 lines of the file are metadata and should really be ignored. I told you earlier that I would show you how to ignore them. We could do this by initialising a line counter variable in a BEGIN block and then incrementing it for each line we process and then only adding to the `breakdown` array if that count variable is greater than 4, but AWK already does this for you. There is a built-in variable in AWK called **NR** which is an acronym for **N**umber of **R**ecords. In other words, it stores the current number of the line being processed. So when processing the first line, NR will have a value of 1, a value of 2 for the second line and so on. With this in mind, all we have to do is add a condition before the action body to tell AWK to only process lines greater than 4 (i.e. line 5 onwards). You can see that in the script below.
+
+```shell noLineNumbers {1}
+awk 'NR>4 { breakdown[$14]++ } END { for(code in breakdown) { print code, breakdown[code] } }' u_ex171118-sample.txt
+```
+```noLineNumbers
+200 38
+301 3
+304 93
+404 8
+```
+
+You can see now that our output only has HTTP status codes along with the number of occurrences of each. Sweet!
+
+There are a number of other handy built-in variables in AWK that allow you to get or set the input and output field separator characters (FS/OFS), the input and output record separators (RS/ORS), the number of fields in the current line (NF), the current filename (FILENAME) and the current number of records relative to the current file being processed (FNR). You can change the values of these variables at any time in your AWK program and it will retain that value for the rest of the program's execution. There are many other predefined and built-in variables in AWK. You can read more about them in the **GNU Awk User's Guide** linked in the **Additional resources** section below.
+
+**AWK script files**
+
+Up until now, we have been writing all our AWK scripts inline. This is fine for simple little scripts, but as soon as you write a slightly more complex script with BEGIN/END blocks (like we did with the breakdown script above), it becomes hard to understand and debug things when you have everything in a single line. Thankfully, you can move the script out to an external file and then point to the file while running your command. You will also be able to format your script better in an external file and it makes it easy to share the script files around. Let's change our breakdown script above to use an external file instead.
+
+Create a new file called 'breakdown.awk' in the same directory where you saved the sample log file we've been using. Copy the following code into the file and save it.
+
+```shell:title=breakdown.awk
+NR>4 {
+    breakdown[$14]++
+}
+END {
+    for(code in breakdown) {
+        print code, breakdown[code]
+    }
+}
+```
+
+Now we can run the command below and we should get the same output as before.
+
+```shell noLineNumbers {1}
+awk -f breakdown.awk u_ex171118-sample.txt
+```
+```noLineNumbers
+200 38
+301 3
+304 93
+404 8
+```
+
+**Multiple condition action pairs**
+
+AWK scripts can also have multiple condition action pairs in the same file. This is handy if you want to do a different action for some lines compared to others. For example, we could add another condition action pair if we wanted to print out the URLs of all the entries with a 404 status code in addition to showing the breakdown numbers like we do at the moment. Here is how we can achieve that:
+
+```shell:title=breakdown.awk {1-3}
+$14 == 404 {
+    print $4
+}
+NR>4 {
+    breakdown[$14]++
+}
+END {
+    for(code in breakdown) {
+        print code, breakdown[code]
+    }
+}
+```
+
+Re-run the awk command and you should see output like this:
+
+```shell noLineNumbers {1}
+awk -f breakdown.awk u_ex171118-sample.txt
+```
+```noLineNumbers
+/contact/contact.aspxx
+/wp-includes/wlwmanifest.xml
+/xmlrpc.php
+/blog/wp-includes/wlwmanifest.xml
+/wordpress/wp-includes/wlwmanifest.xml
+/wp/wp-includes/wlwmanifest.xml
+/site/wp-includes/wlwmanifest.xml
+/cms/wp-includes/wlwmanifest.xml
+200 38
+301 3
+304 93
+404 8
+```
+
+What's happening here is that AWK is actually testing every line against both conditions in the file. For most lines, only the `NR>4` condition matches and hence only that condition's related action is executed. However, for the lines where the status code is 404, both the `$14 == 404` AND `NR>4` conditions are met and therefore both those action bodies are executed. That is why you get the URLs for the 404 status AND those 404 status lines also get counted as part of the breakdown while the other non-404 lines only get added to the breakdown. Brilliant!
+
+**Running AWK scripts on multiple files**
+
+The **awk** command allows you to run your scripts on multiple files. So far, we've been extracting data out of a single sample log file. In reality, we may have multiple log files we want to process with the same script and get a unified result across all the files. We can do this by simply passing in additional file paths after the first file path like this:
+
+```shell noLineNumbers {1}
+awk -f breakdown.awk u_ex171118-sample.txt log2.txt log3.txt log4.txt
+```
+
+Each file will be processed line-by-line in the order that they are passed in and you will end up with an overall breakdown of status codes across all the files (assuming all the other files are in the same format as the sample log file).
+
+### Conclusion
+
+This blog post was inspired by a youtube video I watched recently (linked in the references section below). It occurred to me that with the launch of WSL (and soon WSL 2), Windows developers now have access to a much wider range of new commands and tools which they might not know much about. I wrote this blog post to share what I had learned about one such handy Unix/Linux command. As you've seen above, **awk** is an incredibly powerful and convenient tool to have in your tool belt. It reads in text files line by line, breaks down each line into fields and lets you write simple yet powerful scripts to process and extract meaningful data out of them. I hope you found this post useful and that you'll start using **awk** to process your logs, CSVs or any other text files you can find.
+
+Thank you for reading and see you in the next one!
 
 ### Additional resources
 
