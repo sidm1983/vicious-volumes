@@ -11,7 +11,7 @@ module.exports = {
     siteLanguage: `en`,
     siteTitle: `Sid Mansukhani`,
     siteTitleAlt: `Sid Mansukhani's Blog`,
-    siteUrl: `https://sidmansukhani.dev`
+    siteUrl: `https://sidman.dev`
   },
   plugins: [
     {
@@ -49,8 +49,8 @@ module.exports = {
     {
       resolve: `gatsby-plugin-manifest`,
       options: {
-        name: `minimal-blog - @lekoarts/gatsby-theme-minimal-blog`,
-        short_name: `minimal-blog`,
+        name: `Sid Mansukhani's blog`,
+        short_name: `sid-man-blog`,
         description: `A blog by Sid Mansukhani, a Melbourne-based developer, tech enthusiast, aspiring photographer, father & husband.`,
         start_url: `/`,
         background_color: `#fff`,
