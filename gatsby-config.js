@@ -11,6 +11,7 @@ module.exports = {
     siteLanguage: `en`,
     siteTitle: `Sid Mansukhani`,
     siteTitleAlt: `Sid Mansukhani's Blog`,
+    siteHeadline: `Sid Mansukhani's Blog`,
     siteUrl: `https://sidman.dev`
   },
   plugins: [
