@@ -32,7 +32,7 @@ That is definitely a question, and the answer depends on whether you are reading
 
 Now that you have WSL and Ubuntu (or any other Linux distribution) installed and set up, it is time to meet the star of the show, ***awk***.
 
-The Unix/Linux command ***awk*** lets you run scripts written in the AWK programming language to process lines in one or more files. The AWK script consists of a series of condition action statement pairs. Each line in the file is tested against the condition (which can be either a regex pattern or an regular conditional statement) and if the condition evaluates to true, the corresponding action block is executed. In other words, ***awk*** lets you process text files line-by-line allowing you to extract only the data you need from it or produce formatted reports. Now, before we get into the detail of how this command works, let me give you a brief history lesson.
+The Unix/Linux command ***awk*** lets you run scripts written in the AWK programming language to process lines in one or more files. The AWK script consists of a series of condition action statement pairs. Each line in the file is tested against the condition (which can be either a regex pattern or an regular conditional statement) and if the condition evaluates to true, the corresponding action block is executed. Lines are also automatically split up into fields and you can have these conditions evaluated against individual fields on a line rather than the whole line. In other words, ***awk*** lets you process text files line-by-line allowing you to extract only the data you need from it or to produce formatted reports. Now, before we get into the detail of how this command works, let me give you a brief history lesson.
 
 ### A w`awk` down memory lane
 
@@ -220,7 +220,7 @@ awk 'NR>4 { breakdown[$14]++ } END { for(code in breakdown) { print code, breakd
 
 You can see now that our output only has HTTP status codes along with the number of occurrences of each. Sweet!
 
-There are a number of other handy built-in variables in AWK that allow you to get or set the input and output field separator characters (FS/OFS), the input and output record separators (RS/ORS), the number of fields in the current line (NF), the current filename (FILENAME) and the current number of records relative to the current file being processed (FNR). You can change the values of these variables at any time in your AWK program and it will retain that value for the rest of the program's execution. There are many other predefined and built-in variables in AWK. You can read more about them in the **GNU Awk User's Guide** linked in the **Additional resources** section below.
+There are a number of other handy built-in variables in AWK that allow you to get or set the input and output field separator characters (FS/OFS), the input and output record separators (RS/ORS), the number of fields in the current line (NF), the current filename (FILENAME) and the current number of records relative to the current file being processed (FNR). You can change the values of these variables at any time in your AWK program and it will retain that value for the rest of the program's execution. There are many other predefined and built-in variables in AWK. You can read more about them in the **GNU Awk User's Guide** linked in the **References** section at the end of this post.
 
 **AWK script files**
 
@@ -301,18 +301,43 @@ awk -f breakdown.awk u_ex171118-sample.txt log2.txt log3.txt log4.txt
 
 Each file will be processed line-by-line in the order that they are passed in and you will end up with an overall breakdown of status codes across all the files (assuming all the other files are in the same format as the sample log file).
 
+**Processing other types of text files**
+
+Everything I have shown you thus far helps you extract data out of an IIS log file. This type of log file has one entry per line (a record) and uses the space character to separate individual bits of information within a single line (a field). The way awk processes these log files is by having an understanding of how these fields and records are stored within this log file. By default, awk assumes that each line is a record and knows when one line ends and the next one begins by looking for a newline character (\n). This is the default value of the **RS** (record separator) built-in variable within AWK. Additionally, AWK also knows how to break up a single line into individual fields. In this case, awk uses the space character by default to determine when one field ends and the next one begins. The built-in variable **FS** (field separator) is what controls how awk splits up a line/record into fields.
+
+By changing these two variables, you can easily configure AWK to read a text file with a different format to the sample log file we've been using. For example, if you needed to process a CSV file, you would simply leave the **RS** variable set to the newline character, but change the **FS** variable to the comma (,) character. AWK would then treat each line as a new record (just like our sample log file), but each line would be split into fields using the comma character. You can do this in one of two ways as shown below.
+
+_Option 1:_
+
+Assuming our sample log file had all the same fields in the same order, but was a CSV-formatted file, then here is how we could invoke our breakdown.awk script to process the CSV log file.
+
+```shell noLineNumbers {1}
+awk -F , -f breakdown.awk u_ex171118-sample.txt
+```
+
+All we had to do was add the `-F ,` option to the awk command. This option tells the awk command to change the value of the **FS** variable within our AWK script to the comma character.
+
+_Option 2:_
+
+You can also change the value of the **FS** variable in a BEGIN block before AWK processes any lines within the input file.
+
+```shell
+BEGIN {
+    FS = ","
+}
+```
+
+> **Tip:** If you want to change the record separator, you can ONLY do so by updating the **RS** variable in a BEGIN block within your script (like we did with the **FS** variable in option 2 above). There is no option to pass in a different record separator character at the commandline.
+
 ### Conclusion
 
-This blog post was inspired by a youtube video I watched recently (linked in the references section below). It occurred to me that with the launch of WSL (and soon WSL 2), Windows developers now have access to a much wider range of new commands and tools which they might not know much about. I wrote this blog post to share what I had learned about one such handy Unix/Linux command. As you've seen above, **awk** is an incredibly powerful and convenient tool to have in your tool belt. It reads in text files line by line, breaks down each line into fields and lets you write simple yet powerful scripts to process and extract meaningful data out of them. I hope you found this post useful and that you'll start using **awk** to process your logs, CSVs or any other text files you can find.
+This blog post was inspired by a youtube video I watched recently (linked in the **References** section below). It occurred to me that with the launch of WSL (and soon WSL 2), Windows developers now have access to a much wider range of new commands and tools which they might not know much about. I wrote this blog post to share what I had learned about one such handy Unix/Linux command. As you've seen above, **awk** is an incredibly powerful and convenient tool to have in your tool belt. It reads in text files line by line, breaks down each line into fields and lets you write simple yet powerful scripts to process and extract meaningful data out of them. What I have shown you here is just a starting point to pique your interest. AWK is a really powerful language and has many more advance features and functions. If you are interested to learn more, I would highly recommend diving into **The GNU Awk User's Guide** that I have linked to in the **References** section below. I hope you found this post useful and that you'll start using **awk** to process your logs, CSVs or any other text files you can find.
 
-Thank you for reading and see you in the next one!
-
-### Additional resources
-
-1. The GNU Awk User's Guide - https://www.gnu.org/software/gawk/manual/gawk.html
+Thanks for reading. That's all for now and see you in the next one!
 
 ### References
 
+1. The GNU Awk User's Guide - https://www.gnu.org/software/gawk/manual/gawk.html
 1. This blog post was inspired by the <a href="https://www.youtube.com/watch?v=jJ02kEETw70" target="_blank">"EVERYONE Needs to Learn a Little Bit of AWK!"</a> video on the <a href="https://www.youtube.com/channel/UCRjSO-juFtngAeJGJRMdIZw" target="_blank">Gary Explains</a> Youtube channel.
 1. Sample IIS file copied from https://www.site-logfile-explorer.com/logfile-samples/iis.aspx
 1. AWK on Wikipedia - https://en.wikipedia.org/wiki/AWK
