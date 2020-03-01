@@ -11,11 +11,15 @@ tags:
   - Log Processing
   - Scripting
   - Tutorial
+banner: ./log-file-hero.jpg
+featuredImage: ./log-file-hero.jpg
 ---
 
-It’s 4 pm on a Friday afternoon. You’re sitting at your workstation, attempting to finish off development of that feature you’ve been working on all week. You’ve got your headphones on with your favourite music playing to block out all the Friday afternoon shenanigans. The feature is almost done and you’re looking forward to begin your weekend. Suddenly, you feel a light tap on your shoulder. It’s your boss! He/she needs your help to get a breakdown of the success/failure of all incoming requests for the last week. So you jump on to the server and start downloading the log files for the last week. There are at least a dozen files and while they’re downloading, you begin to search for the best way to extract the data you need.
+![Photo of a text file](./log-file-hero.jpg)
 
-How would you go about doing this? There are many ways of course. You could import the log file into a database and run queries against it. You could also download software like Microsoft's Log Parser and run SQL-like queries to make sense of your logs. What about using Microsoft Excel? Sure, that works too.
+It’s 4 pm on a Friday afternoon. You’re sitting at your workstation, attempting to finish off development of that feature you’ve been working on all week. You’ve got your headphones on with your favourite music playing to block out all the Friday afternoon shenanigans. The feature is almost done and you’re looking forward to begin your weekend. Suddenly, you feel a light tap on your shoulder. It’s your boss! She needs your help to get a breakdown of all successful/failed incoming requests to the company website for the last week. Reluctantly, you decide to jump on to the server and start downloading the log files for the last week. There are at least a dozen files and while they’re downloading, you begin to search for the best way to extract the data you need.
+
+How would you go about doing this? There are many ways of course. You could import the log files into a database and run queries against it. You could also download software like Microsoft's Log Parser and run SQL-like queries to make sense of your logs. What about using Microsoft Excel? Sure, that works too.
 
 Today, we are not going to use any of the above methods. Instead, we are going to attempt to extract meaningful data from an IIS log file using a developer-friendly approach. (Psst...this approach should work for extracting data out of any type of text file, and not just IIS log files.)
 
@@ -353,3 +357,4 @@ Thanks for reading. That's all for now and see you in the next one!
 1. This blog post was inspired by the <a href="https://www.youtube.com/watch?v=jJ02kEETw70" target="_blank">"EVERYONE Needs to Learn a Little Bit of AWK!"</a> video on the <a href="https://www.youtube.com/channel/UCRjSO-juFtngAeJGJRMdIZw" target="_blank">Gary Explains</a> Youtube channel.
 1. Sample IIS file copied from https://www.site-logfile-explorer.com/logfile-samples/iis.aspx
 1. AWK on Wikipedia - https://en.wikipedia.org/wiki/AWK
+1. Hero photo by <a href="https://unsplash.com/@mbaumi?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText" target="_blank">Mika Baumeister</a> on <a href="https://unsplash.com/@mbaumi?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText" target="_blank">Unsplash</a>
