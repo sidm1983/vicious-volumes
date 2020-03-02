@@ -15,8 +15,6 @@ banner: ./log-file-hero.jpg
 featuredImage: ./log-file-hero.jpg
 ---
 
-![Photo of a text file](./log-file-hero.jpg)
-
 It’s 4 pm on a Friday afternoon. You’re sitting at your workstation, attempting to finish off development of that feature you’ve been working on all week. You’ve got your headphones on with your favourite music playing to block out all the Friday afternoon shenanigans. The feature is almost done and you’re looking forward to begin your weekend. Suddenly, you feel a light tap on your shoulder. It’s your boss! She needs your help to get a breakdown of all successful/failed incoming requests to the company website for the last week. Reluctantly, you decide to jump on to the server and start downloading the log files for the last week. There are at least a dozen files and while they’re downloading, you begin to search for the best way to extract the data you need.
 
 How would you go about doing this? There are many ways of course. You could import the log files into a database and run queries against it. You could also download software like Microsoft's Log Parser and run SQL-like queries to make sense of your logs. What about using Microsoft Excel? Sure, that works too.
@@ -242,7 +240,7 @@ There are a number of other handy built-in variables in AWK that allow you to ge
 
 Up until now, we have been writing all our AWK scripts inline. This is fine for simple little scripts, but as soon as you write a slightly more complex script with BEGIN/END blocks (like we did with the breakdown script above), it becomes hard to understand and debug things when you have everything in a single line. Thankfully, you can move the script out to an external file and then point to the file while running your command. You will also be able to format your script better in an external file and it makes it easy to share the script files around. Let's change our breakdown script above to use an external file instead.
 
-Create a new file called 'breakdown.awk' in the same directory where you saved the sample log file we've been using. Copy the following code into the file and save it.
+Create a new file called 'breakdown.awk' in the same directory where you saved the sample log file we've been using. Copy the following code into the file and save it. This is the same program we wrote above, but just placed in a separate file and formatted nicely to make it more readable and maintainable.
 
 ```shell:title=breakdown.awk
 NR>4 {
@@ -307,6 +305,41 @@ awk -f breakdown.awk u_ex171118-sample.txt
 
 What's happening here is that AWK is actually testing every line against both conditions in the file. For most lines, only the `NR>4` condition matches and hence only that condition's related action is executed. However, for the lines where the status code is 404, both the `$14 == 404` AND `NR>4` conditions are met and therefore both those action bodies are executed. That is why you get the URLs for the 404 status AND those 404 status lines also get counted as part of the breakdown while the other non-404 lines only get added to the breakdown. Brilliant!
 
+**User-defined functions in AWK**
+
+Function definitions can appear anywhere in between, before or after the condition action pairs in an AWK program and don't need to appear at the top or before all uses of the function. The reason is that awk loads the entire script in before performing any executions. Here is the basic syntax of a function:
+
+```shell
+function funcName([parameter-list])
+{
+    body-of-function
+}
+```
+
+Let's update our breakdown script above and create a function to print the breakdown in the END block. Also, just to prove that awk does load in the whole program and that we can in fact define our function after its usage, let's add the function to the end of the file. Here is what that would look like:
+
+```shell:title=breakdown.awk {8,11-17}
+$14 == 404 {
+    print $4
+}
+NR>4 {
+    breakdown[$14]++
+}
+END {
+    printArray(breakdown)
+}
+
+function printArray(anArray)
+{
+    for(arrIndex in anArray)
+    {
+        print arrIndex, anArray[arrIndex]
+    }
+}
+```
+
+If we re-run our awk command, you should still see the same output as before. We were able to extract the for loop and print statement into a user-defined function which we then called from the END block. As you can see, our function is defined after its usage. This is great because we can now write re-usable functions to process text and make our AWK programs more readable.
+
 **Running AWK scripts on multiple files**
 
 The **awk** command allows you to run your scripts on multiple files. So far, we've been extracting data out of a single sample log file. In reality, we may have multiple log files we want to process with the same script and get a unified result across all the files. We can do this by simply passing in additional file paths after the first file path like this:
@@ -335,7 +368,7 @@ All we had to do was add the `-F ,` option to the awk command. This option tells
 
 _Option 2:_
 
-You can also change the value of the **FS** variable in a BEGIN block before AWK processes any lines within the input file.
+You can also change the value of the **FS** variable at any point throughout the execution of the program. Below is an example where we are changing the **FS** variable to a comma character in a BEGIN block before any CSV lines are processed.
 
 ```shell
 BEGIN {
@@ -343,11 +376,11 @@ BEGIN {
 }
 ```
 
-> **Tip:** If you want to change the record separator, you can ONLY do so by updating the **RS** variable in a BEGIN block within your script (like we did with the **FS** variable in option 2 above). There is no option to pass in a different record separator character at the commandline.
+> **Tip:** If you want to change the record separator, you can ONLY do so by updating the **RS** variable within your script (like we did with the **FS** variable in option 2 above). There is no option to pass in a different record separator character at the command line.
 
 ### Conclusion
 
-This blog post was inspired by a youtube video I watched recently (linked in the **References** section below). It occurred to me that with the launch of WSL (and soon WSL 2), Windows developers now have access to a much wider range of new commands and tools which they might not know much about. I wrote this blog post to share what I had learnt about one such handy Unix/Linux command. As you've seen above, **awk** is an incredibly powerful and convenient tool to have in your tool belt. It reads in text files line by line, breaks down each line into fields and lets you write simple yet powerful scripts to process and extract meaningful data out of them. What I have shown you here is just a starting point to pique your interest. AWK is a really powerful language and has many more advance features and functions. If you are interested to learn more, I would highly recommend diving into **The GNU Awk User's Guide** that I have linked to in the **References** section below. I hope you found this post useful and that you'll start using **awk** to process your logs, CSVs or any other text files you can find.
+This blog post was inspired by a youtube video I watched recently (linked in the **References** section below). It occurred to me that with the launch of WSL (and soon WSL 2), Windows developers now have access to a much wider range of new commands and tools which they might not know much about. I wrote this blog post to share what I had learnt about one such handy Unix/Linux command. As you've seen above, **awk** is an incredibly powerful and convenient tool to have in your tool belt. It reads in text files line by line, breaks up each line into fields and lets you write simple yet powerful scripts to process and extract meaningful data out of them. What I have shown you here is just a brief introduction to awk and I hope it has piqued your interest. AWK is a really powerful language and has many more advance features and built-in functions. If you are keen to learn more, I would highly recommend diving into **The GNU Awk User's Guide** that I have linked to in the **References** section below. I hope you found this post useful and that you'll start using **awk** to process your logs, CSVs or any other text files you can find.
 
 Thanks for reading. That's all for now and see you in the next one!
 
