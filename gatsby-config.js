@@ -6,12 +6,11 @@ module.exports = {
   siteMetadata: {
     author: `@sidm1983`,
     siteDescription: `A blog by Sid Mansukhani, a Melbourne-based developer, tech enthusiast, aspiring photographer, father & husband.`,
-    siteHeadline: `A blog by Sid Mansukhani, a Melbourne-based developer, tech enthusiast, aspiring photographer, father & husband.`,
+    siteHeadline: `Sid Mansukhani's Blog`,
     siteImage: ``,
     siteLanguage: `en`,
     siteTitle: `Sid Mansukhani`,
     siteTitleAlt: `Sid Mansukhani's Blog`,
-    siteHeadline: `Sid Mansukhani's Blog`,
     siteUrl: `https://sidman.dev`
   },
   plugins: [
