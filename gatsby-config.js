@@ -29,7 +29,7 @@ module.exports = {
         ],
         externalLinks: [
           {
-            name: `Github`,
+            name: `GitHub`,
             url: `https://github.com/sidm1983`,
           },
           {
