@@ -7,7 +7,7 @@ module.exports = {
     author: `@sidm1983`,
     siteDescription: `A blog by Sid Mansukhani, a Melbourne-based developer, tech enthusiast, aspiring photographer, father & husband.`,
     siteHeadline: `Sid Mansukhani's Blog`,
-    siteImage: ``,
+    siteImage: `/android-chrome-512x512.png`,
     siteLanguage: `en`,
     siteTitle: `Sid Mansukhani`,
     siteTitleAlt: `Sid Mansukhani's Blog`,
@@ -41,6 +41,8 @@ module.exports = {
             url: `https://www.instagram.com/sidm1983/`,
           },
         ],
+        feedTitle: `Sid Mansukhani's Blog`,
+        formatString: `DD/MM/YYYY`
       },
     },
     {
@@ -77,52 +79,5 @@ module.exports = {
     `gatsby-plugin-offline`,
     `gatsby-plugin-netlify`,
     // `gatsby-plugin-webpack-bundle-analyser-v2`,
-    {
-      resolve: `gatsby-plugin-feed`,
-      options: {
-        query: `
-          {
-            site {
-              siteMetadata {
-                title: siteTitle
-                description: siteDescription
-                siteUrl
-              }
-            }
-          }
-        `,
-        feeds: [
-          {
-            serialize: ({ query: { site, allPost } }) => {
-              return allPost.nodes.map(post => {
-                return {
-                  title: post.title,
-                  date: post.date,
-                  excerpt: post.excerpt,
-                  url: site.siteMetadata.siteUrl + post.slug,
-                  guid: site.siteMetadata.siteUrl + post.slug,
-                  custom_elements: [{ "content:encoded": post.html }],
-                }
-              })
-            },
-            query: `
-              {
-                allPost(sort: { fields: date, order: DESC }) {
-                  nodes {
-                    title
-                    date(formatString: "MMMM D, YYYY")
-                    excerpt
-                    slug
-                    html
-                  }
-                }
-              }
-            `,
-            output: `rss.xml`,
-            title: `Sid Mansukhani's Blog`,
-          }
-        ]
-      }
-    }
   ],
 }
